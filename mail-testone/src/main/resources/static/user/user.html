@@ -1,0 +1,188 @@
+<div id="user_grid"></div>
+
+<div id="user_window" class="easyui-window" data-options="modal:true,closed:true" style="width: 400px;height: 500px">
+    <form action="../saveUser" id="user_form">
+        <input id="id" type="hidden" name="id" value="0"/>
+        <div>
+            <input id="username" name="name" placeholder="请输入用户名"/>
+        </div>
+        <div>
+            <input id="userpassword" type="password" name="password" placeholder="请输入密码"/>
+        </div>
+        <div>
+            <div>
+                <input id="selop" name="role" class="easyui-combobox" data-options="url:'../getEveryRole',method:'get',textField:'name',valueField:'id'"/>
+            </div>
+
+        </div>
+    </form>
+    <button onclick="saveUser()">保存</button>
+</div>
+
+    <script>
+
+        //定义方法关键字：function 后面括号前跟方法名
+        function user_init() {
+            //JQuery语法-获取标签：$()，括号内跟选择器，datagrid为属性名
+            $("#user_grid").datagrid({
+                pagination:true,
+                //创建行
+                columns:[[
+                    //关键字 field，创建列
+                    {field:"id",title:"id",checkbox:true},
+                    {field:"name",title:"账号",width:100},
+                    {field:"password",title:"密码",width:100},
+                    {field:"role",title:"角色",width:100}
+                ]],
+                //创建按钮
+                toolbar:[
+                    //text关键字：前端显示的文字，iconCls关键字：样式选择器
+                    {text:"删除",iconCls:"icon-remove",handler:function () {
+                            removeUser();
+                        }},
+                    {text:"添加",iconCls:"icon-add",handler:function () {
+                            toAdd();
+                        }},
+                    {text:"修改",iconCls:"icon-edit",handler:function () {
+                            toEdit();
+                        }}
+                ]
+            });
+            //读取页数，显示数据
+            fillData(1,2);
+        }
+
+
+
+
+
+        var count = 0;
+        //动态填充数据
+        function fillData(a,b) {
+
+            $.get("../total",function (rs) {
+                count = rs;
+            });
+
+            $.get("../findAllUser",{page:a,size:b},function (rs) {
+
+                //rs为后端返回的数据，通过rs来传输给前端标签
+                $("#user_grid").datagrid("loadData",rs);
+                //获取分页的组件，左右箭头
+                var pager =  $("#user_grid").datagrid("getPager");
+                //设置分页的属性和动作
+                pager.pagination({
+                    //数据的条数
+                    total:count,
+                    //每页条数
+                    pageSize:b,
+                    //当前页码
+                    pageNumber:a,
+                    //可设置的一页现实的条目数
+                    pageList:[2,10,20],
+                    //翻页的时候会触发这个方法
+                    onSelectPage:function (page,size) {
+                        //根据新的页码查询数据，重新回到此方法头部
+                        // 以递归实现
+                        fillData(page,size);
+                    }
+                });
+            });
+        }
+
+        //删除
+        function removeUser() {
+            //获取选择的参数
+            var data = $("#user_grid").datagrid("getSelected");
+            if(data==null){
+                $.messager.alert("系统提示","请选择需要删除的数据");
+            }else{
+                $.get("../removeUser?id="+data.id,function (rs) {
+                    $.messager.alert("系统提示","删除完成");
+                    // $("#user_grid").datagrid("reload");
+                    fillData(1,2);
+                });
+            }
+        }
+
+
+
+
+
+        //弹出窗口
+        function toAdd() {
+            //窗口数据还原
+            $("#user_form").form("clear");
+            $("#id").val("0");
+            // addRole()
+            $("#user_window").window("open");
+        }
+
+
+
+
+
+        //储存对象
+        function saveUser() {
+            //取值
+            var name = $("#username").val();
+            var password = $("#userpassword").val();
+            //取select值
+            var role = $("#selop").val();
+
+            //判断
+            if(name=="" || password==""||role==""){
+                $.messager.alert("系统提示","账号密码及角色必须输入");
+                return;
+            }
+
+            // 保存用户
+            $("#user_form").form("submit",{
+                //回调
+                success:function (rs) {
+                    console.log(rs);
+                    if(rs=="1"){
+                        //刷新
+                        // $("#user_grid").datagrid("reload");
+                        fillData(1,2);
+                        //关闭
+                        $("#user_window").window("close");
+                    }else {
+                        $.messager.alert("系统提示","添加失败");
+                    }
+                }
+            })
+        }
+
+
+
+        //修改对象
+        function toEdit() {
+            //获取数据
+            var data = $("#user_grid").datagrid("getSelected");
+            if(data == null){
+                $.messager.alert("系统提示","请选择需要修改的用户");
+                return;
+            }
+
+            //读取数据，rs为方法的返回值
+            $.get("../toEdit?id="+data.id,function (rs) {
+                //填入数据
+                console.log(rs.role);
+                $("#user_form").form("load",{
+
+                    id:rs.id,
+                    name:rs.name,
+                    password:rs.password,
+                    role:rs.role
+                });
+                //弹出窗口
+                $("#user_window").window("open")
+            });
+        }
+
+
+        //页面渲染完毕，调用user_init()函数
+        // $(user_init);
+        user_init();
+    </script>

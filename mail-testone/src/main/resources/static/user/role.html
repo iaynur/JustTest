@@ -1,0 +1,192 @@
+<div id="role_grid"></div>
+
+<div id="role_window" class="easyui-window" data-options="modal:true,closed:true" style="width: 400px;height: 500px">
+    <form action="../saveRole" id="role_form">
+        <input id="rid" type="hidden" name="id" value="0"/>
+        <div>
+            <input id="rolename" name="name" placeholder="请输入角色"/>
+        </div>
+        <div id="checkbox"></div>
+    </form>
+    <button onclick="saveRole()">保存</button>
+</div>
+
+    <script>
+        function role_init() {
+            $("#role_grid").datagrid({
+                //分页
+                pagination:true,
+                //创建行
+                columns:[[
+                    {field:"id",title:"id",checkbox:true},
+                    {field:"name",title:"角色名",width:100},
+                    {field:"power",title:"权限",width:400}
+                ]],
+
+                //创建按钮
+                toolbar:[
+                    //text关键字：前端显示的文字，iconCls关键字：样式选择器
+                    {text:"删除",iconCls:"icon-remove",handler:function () {
+                            romveRole();
+                        }},
+                    {text:"添加",iconCls:"icon-add",handler:function () {
+                            addWindows();
+                        }},
+                    {text:"修改",iconCls:"icon-edit",handler:function () {
+                            updateRole();
+                        }}
+                ]
+            });
+            //读取页数,显示数据
+            fileData(1,2);
+        }
+
+
+        //动态分页，给页面填充数据
+        var count = 0;
+        function fileData(a,b) {
+            //设置查询到的条目数量
+            $.get("../getRoleNum",function (rs) {
+                count = rs;
+                // console.log(rs);
+            });
+
+            //设置分页
+            $.get("../getallrole",{page:a,size:b},function (rs) {
+                 // console.log(rs);
+                //rs为返回值
+                $("#role_grid").datagrid("loadData",rs);
+                //获取分页组件
+                var pager = $("#role_grid").datagrid("getPager");
+                //设置分页属性和动作
+                pager.pagination({
+                    //数据条数
+                    total:count,
+                    //每页条数
+                    pageSize:b,
+                    //当前页码
+                    pageNumber:a,
+                    //可设置的一页显示条目数
+                    pageList:[2,10,20],
+                    //翻页方法
+                    onSelectPage:function (page,size) {
+                        fileData(page,size);
+                    }
+                });
+            });
+        }
+        
+        
+        //删除数据
+        function romveRole() {
+            var data = $("#role_grid").datagrid("getSelected");
+
+            if(data == null){
+                $.messager.alert("系统提示","请选择需要删除的数据");
+            }else {
+                $.get("../removeRole",{id:data.id},function (rs) {
+                    // console.log(rs);
+                    $.messager.alert("系统提示","删除成功");
+                    fileData(1,2);
+                });
+            }
+        }
+
+
+        //动态添加权限
+        function addRole() {
+            $.get("../getEveryPower",function (rs) {
+                   $.each(rs,function (index,value) {
+                       $("#checkbox").append("<input name='power' type='checkbox' value='"+value.id+"'>"+value.text+"</input><br/>");
+                   });
+            });
+        }
+
+        //弹出方法
+        function addWindows() {
+            //清理窗口信息
+            $("#role_form").form("clear");
+            //id默认值0
+            $("#rid").val("0");
+            //清空多选
+            $("#checkbox").html("");
+            //添加多选
+            addRole();
+            //打开窗口
+            $("#role_window").window("open");
+        }
+
+        //添加角色
+        function saveRole() {
+            //获取到input的值
+            var rolename = $("#rolename").val();
+            //判断前端参数
+            if(rolename == "" ){
+                $.messager.alert("系统提示","请输入角色名");
+                return;
+            }
+
+            //保存角色
+            $("#role_form").form("submit",{
+                success:function(rs){
+                    //如果成功
+                    // console.log(rs);
+                    if(rs == "1"){
+                        //刷新目录
+                        fileData(1,2);
+                        //窗口关闭
+                        $("#role_window").window("close");
+                    }else{
+                        $.messager.alert("系统提示","添加失败");
+                    }
+                }
+            });
+        }
+
+        //修改角色
+        function updateRole() {
+            //获取前端数据
+            var data = $("#role_grid").datagrid("getSelected");
+            if(data == null){
+                $.messager.alert("系统提示","请选择需要修改的用户");
+                return;
+            }
+            //读取数据，保存数据
+            $.get("../roleToEdit",{id:data.id},function (rs) {
+                //清理多选框
+                $("#checkbox").html("");
+
+                //填入id和name数据
+                $("#role_form").form("load",{
+                    id:rs[1].id,
+                    name:rs[1].name,
+                });
+
+
+                //填入多选框
+                $.get("../getEveryPower",function (rs2) {
+                    var emun;
+                    $.each(rs2,function (index2,value2) {
+                        $.each(rs,function (index,value){
+                            if(value2.text == value.power){
+                                $("#checkbox").append("<input name='power' type='checkbox' checked value='"+value2.id+"'>"+value2.text+"</input><br/>");
+                                emun = value.power;
+                            }
+                        });
+                        if(value2.text == emun){
+                            return true;
+                        }else {
+                            $("#checkbox").append("<input name='power' type='checkbox'value='"+value2.id+"'>"+value2.text+"</input><br/>");
+                        }
+                    });
+                });
+
+               //弹出窗口
+                $("#role_window").window("open")
+
+            });
+        }
+
+        role_init();
+    </script>
+

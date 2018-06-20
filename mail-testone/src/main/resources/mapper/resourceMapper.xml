@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.Dao.resourceMapper">
+   <resultMap id="BaseResultMap" type="com.Pojo.resource">
+       <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="text" jdbcType="VARCHAR" property="text" />
+    <collection property="children" javaType="com.Pojo.resource">
+      <result property="text" column="b_text"/>
+      <result property="url" column="b_url"/>
+    </collection>
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, text, parentId, url
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from resource
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+
+ <select id="selectAll" resultMap="BaseResultMap">
+    select a.text,b.text as b_text,b.url as b_url  from resource a left join resource b on b.parentID=a.id where a.parentID=0
+  </select>
+
+    <select id="selectAllForLogin" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    select a.text,b.text as b_text,b.url as b_url  from resource a left join resource b on b.parentID=a.id  right join role_res rr on a.id=rr.res_id right join user_role ur on rr.role_id=ur.user_id where ur.user_id = #{id,jdbcType=INTEGER} and a.parentID=0
+  </select>
+
+    <select id="selectAllResource" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from resource
+    </select>
+
+
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from resource
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.Pojo.resource">
+    insert into resource (id, text, parentId,
+      url)
+    values (#{id,jdbcType=INTEGER}, #{text,jdbcType=VARCHAR}, #{parentid,jdbcType=INTEGER},
+      #{url,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.Pojo.resource">
+    insert into resource
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="text != null">
+        text,
+      </if>
+      <if test="parentid != null">
+        parentId,
+      </if>
+      <if test="url != null">
+        url,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="text != null">
+        #{text,jdbcType=VARCHAR},
+      </if>
+      <if test="parentid != null">
+        #{parentid,jdbcType=INTEGER},
+      </if>
+      <if test="url != null">
+        #{url,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.Pojo.resource">
+    update resource
+    <set>
+      <if test="text != null">
+        text = #{text,jdbcType=VARCHAR},
+      </if>
+      <if test="parentid != null">
+        parentId = #{parentid,jdbcType=INTEGER},
+      </if>
+      <if test="url != null">
+        url = #{url,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.Pojo.resource">
+    update resource
+    set text = #{text,jdbcType=VARCHAR},
+      parentId = #{parentid,jdbcType=INTEGER},
+      url = #{url,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

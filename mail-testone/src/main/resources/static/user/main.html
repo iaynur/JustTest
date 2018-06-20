@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>后台页面</title>
+    <link rel="stylesheet" href="../css/easyui.css"/>
+    <link rel="stylesheet" href="../css/icon.css"/>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/easyui.js"></script>
+
+    <script>
+        //点击用户管理，调用该方法
+        function main_init() {
+            $("#main_tree").tree({
+                //给tree点击事件，处理函数
+                onClick:function (node) {
+                    //判断是否已经创建
+                    var had = $("#main_work").tabs("exists",node.text);
+                    if(!had){
+                        // 添加table
+                        $("#main_work").tabs("add",{
+
+                            //选项卡标题
+                            title:node.text,
+                            //选项卡是否可关闭
+                            closable:true,
+                            href:node.url
+                        });
+
+                    }else{
+                        //激活页面
+                        $("#main_work").tabs("select",node.text);
+                    }
+                }
+            });
+        }
+
+        $(main_init);
+    </script>
+
+</head>
+<body>
+<div class="easyui-layout" style="width: 100%;height: 600px">
+    <div data-options="region:'north'" style="width: 100%;height: 110px;">
+        <a href="../logout">退出</a>
+    </div>
+    <div data-options="region:'west'" style="width: 15%;height: 100%;)">
+        <ul id="main_tree" class="easyui-tree" data-options="url:'../findAllResLogin',method:'get'"></ul>
+    </div>
+    <div id="main_work" class="easyui-tabs" data-options="region:'center'"></div>
+</div>
+</body>
+</html>
